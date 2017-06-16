@@ -13,7 +13,6 @@ var connection = mysql.createConnection({
 connection.connect(function(err){
    if(err) throw err;
     console.log("Connection successful!"); 
-    start();
 });
 
 //initializing the application to run what you need
@@ -90,3 +89,4 @@ var buyRequest = function() {
          });
     });
 };
+start();
