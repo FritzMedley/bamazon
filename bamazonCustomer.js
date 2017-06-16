@@ -1,3 +1,4 @@
+//you're requiring what you need from the packages
 var mysql = require('mysql');
 var inquirer = require('inquirer');
 
@@ -11,13 +12,13 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err){
    if(err) throw err;
-    //console.log("Connection successful!"); 
-
+    console.log("Connection successful!"); 
+    start();
 });
 
+//initializing the application to run what you need
 var start = function() {
     //You need to first prompt the user to send a function with call
-
     inquirer.prompt([{
         name: "start",
         type: "confirm",
@@ -32,21 +33,13 @@ var start = function() {
         }
     })
 }
-start();
-
-
-
-//connection takes place and the items are listed 
-//the user is prompted to choose from a list of IDs 
-//the user is also prompted to choose a quantity 
-//if there's a suffice quantity, the database sends a query that updates based on the user's choice
-//if there isn't a suffice quantity, the code returns insufficient quanity, and rerun the inquirer.
-//if there is, update the amount in the database and inform the user that the transation was successful 
 
 var buyRequest = function() {
 
     connection.query("SELECT * from products", function(err, results){
+        //get a list of items from the database
         if(err) throw err; 
+        //ask the user to select which item he would like to puchase, and what quantity.
         inquirer.prompt([
             {
             name: "itemChoices",
@@ -71,26 +64,29 @@ var buyRequest = function() {
              }
             }
         ]).then(function(answer) {
-
             var currentQuantity;
             for (var i = 0; i < results.length; i++) {
-                if(results[i].product_name === answer.itemChoices) {
+            //set the conditional to pull from the database if the item choices are less
+                if(results[i].product_name === answer.itemChoices && results[i].stock_quantity > answer.quantity) {
                 currentQuantity = results[i].stock_quantity - answer.quantity;
-                }
-            }
-            console.log(currentQuantity);
-
-             connection.query("UPDATE products SET ? WHERE ?", [
+                connection.query("UPDATE products SET ? WHERE ?", [
                 {
                     stock_quantity: currentQuantity
                 }, {
                     product_name: answer.itemChoices
                 }], function(error) {
                     if (error) throw err;
-                    console.log("You've puchased this item!"); 
+                    console.log("You purchased the items!");
+                    currentQuantity = 0;
                     start();
-                });       
-        });
+                });                
+                }
+            //if the quantity requested is higher than the stock, return the user to the beginning.
+                else if (results[i].product_name === answer.itemChoices && results[i].stock_quantity < answer.quantity) {    
+                    console.log("Sorry! There isn't enough of the item available. Please try again with a different amount!");
+                    start();
+                }
+            }      
+         });
     });
 };
-//buyRequest();
